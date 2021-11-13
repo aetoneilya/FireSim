@@ -26,14 +26,13 @@ private:
     sf::Vector2f aim;
 
     std::list<sf::Vector2f> path;
-
     sf::Texture q;
 
 public:
     sf::FloatRect rect;
     AnimationManager anim;
 
-    Human(const sf::Vector2f &Position)
+    Human(const sf::Vector2f &Position, sf::Texture& humanText)
     {
         speed = 50.f;
         position = Position;
@@ -47,13 +46,12 @@ public:
         panic = false;
         dir = DOWN;
 
-        q.loadFromFile("assets/maps/00-guide.png");
-
-        anim.create("STAY", q, 16, 0, 16, 16, 1, 1, 16);
-        anim.create("WALK_DOWN", q, 0, 0, 16, 16, 3, 5, 16);
-        anim.create("WALK_LEFT", q, 0, 16, 16, 16, 3, 5, 16);
-        anim.create("WALK_RIGHT", q, 0, 32, 16, 16, 3, 5, 16);
-        anim.create("WALK_UP", q, 0, 48, 16, 16, 3, 5, 16);
+        anim.create("STAY", humanText, 16, 0, 16, 16, 1, 1, 16);
+        anim.create("WALK_DOWN", humanText, 0, 0, 16, 16, 3, 5, 16);
+        anim.create("WALK_LEFT", humanText, 0, 16, 16, 16, 3, 5, 16);
+        anim.create("WALK_RIGHT", humanText, 0, 32, 16, 16, 3, 5, 16);
+        anim.create("WALK_UP", humanText, 0, 48, 16, 16, 3, 5, 16);
+        // TODO : add dying animation
     }
 
     void draw(sf::RenderWindow &target);

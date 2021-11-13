@@ -4,12 +4,17 @@
 
 void Engine::startEngine()
 {
+
+    humanText.loadFromFile("assets/maps/00-guide.png");
+    fireText.loadFromFile("assets/maps/fire.png");
+
     loadGameScene();
     fillCollisionMap();
     pathfind.setCollisionMap(collisionMap);
 
-    Human test_human({150, 50});
-    humans.push_back(test_human);
+    // Fire test_fire({200, 50});
+    fires.push_back({{170, 50}, fireText});
+    humans.push_back({{150, 50}, humanText});
 
     sf::Clock clock;
     while (window.isOpen())
@@ -39,8 +44,6 @@ void Engine::update(float elapsedTime)
         }
         if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
         {
-            // std::cout << (float)event.mouseButton.x << " " << (float)event.mouseButton.y << std::endl;
-            // humans[0].walkTo({(float)event.mouseButton.x, (float)event.mouseButton.y});
             humans[0].setPath(findPath(humans[0].getPos(), {(float)event.mouseButton.x, (float)event.mouseButton.y}));
         }
     }
@@ -49,6 +52,21 @@ void Engine::update(float elapsedTime)
     {
         humans[i].update(elapsedTime, collisionMap);
     }
+    int fsize = fires.size();
+    for (int i = 0; i < fsize; i++)
+    {
+        fires[i].update(elapsedTime);
+
+        int y = fires[i].getPosition().y / 16 + rand() % 2;
+        int x = fires[i].getPosition().x / 16 + rand() % 2;
+        if (collisionMap[y][x] == 0)
+        {
+            collisionMap[y][x] == 2;
+            fires.push_back({{(float)16 * x, (float)16 * y}, fireText});
+        }
+    }
+
+    
 }
 
 void Engine::draw()
@@ -61,6 +79,11 @@ void Engine::draw()
     for (auto human : humans)
     {
         human.draw(target);
+    }
+
+    for (auto fire : fires)
+    {
+        fire.draw(target);
     }
 
     window.display();
@@ -96,7 +119,8 @@ void Engine::fillCollisionMap()
     }
 }
 
-list<sf::Vector2f> Engine::findPath(sf::Vector2f src,sf::Vector2f dst){
+list<sf::Vector2f> Engine::findPath(sf::Vector2f src, sf::Vector2f dst)
+{
     Pair from((int)src.x / 16, (int)src.y / 16);
     Pair to((int)dst.x / 16, (int)dst.y / 16);
 

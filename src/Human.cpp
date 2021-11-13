@@ -10,17 +10,19 @@ void Human::update(float elapsedTime, std::vector<std::vector<int>> &collisionMa
 
     if (abs(hypotf(position.x - aim.x, position.y - aim.y)) < 1)
     {
-        anim.set("STAY");
-        rect.left = aim.x;
-        rect.top = aim.y;
-        position = aim;
-
-        anim.tick(elapsedTime);
-
         if (!path.empty())
         {
             aim = path.front();
             path.pop_front();
+        }
+        else
+        {
+            anim.set("STAY");
+            rect.left = aim.x;
+            rect.top = aim.y;
+            position = aim;
+
+            anim.tick(elapsedTime);
         }
 
         return;

@@ -7,6 +7,7 @@
 #include "AnimationManager.h"
 #include "TmxLevel.h"
 #include "Human.h"
+#include "Fire.h"
 #include "TmxLevel.h"
 #include "Astar.h"
 
@@ -24,14 +25,11 @@ private:
 
     std::vector<TmxObject> walls;
 
+    sf::Texture humanText, fireText;
     std::vector<Human> humans;
-    std::vector<TmxObject> fires;
+    std::vector<Fire> fires;
     
     Astar pathfind;
-    // Pair src = make_pair(8, 0);
-    // Pair dest = make_pair(0, 0);
-    // pathfind.aStarSearch(src, dest);
-    // list<sf::Vector2f> path = pathfind.getPath();
 
 public:
     Engine(std::string projectName, std::pair<int, int> res)
