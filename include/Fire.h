@@ -18,7 +18,8 @@ public:
         anim.set("FIRE");
         anim.play();
 
-        position = Position;
+        position.x = 16 * ((int)Position.x / 16);
+        position.y = 16 * ((int)Position.y / 16);
 
         rect.left = position.x;
         rect.top = position.y;

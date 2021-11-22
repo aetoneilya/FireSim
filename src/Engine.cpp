@@ -1,24 +1,21 @@
-#include <iostream>
-
 #include "Engine.h"
 
-void Engine::startEngine()
-{
+#include <iostream>
 
+void Engine::startEngine() {
     humanText.loadFromFile("assets/maps/00-guide.png");
     fireText.loadFromFile("assets/maps/fire.png");
 
     loadGameScene();
     fillCollisionMap();
-    pathfind.setCollisionMap(collisionMap);
 
     // Fire test_fire({200, 50});
-    fires.push_back({{170, 50}, fireText});
     humans.push_back({{150, 50}, humanText});
+    humans.push_back({{165, 50}, humanText});
+    humans.push_back({{150, 70}, humanText});
 
     sf::Clock clock;
-    while (window.isOpen())
-    {
+    while (window.isOpen()) {
         const sf::Time elapsedTime = clock.getElapsedTime();
         clock.restart();
 
@@ -27,104 +24,134 @@ void Engine::startEngine()
     }
 }
 
-void Engine::loadGameScene()
-{
+void Engine::loadGameScene() {
     level.LoadFromFile("assets/maps/level.tmx");
     walls = level.GetAllObjects("block");
+    exits = level.GetAllObjects("EXIT");
 }
 
-void Engine::update(float elapsedTime)
-{
+void Engine::update(float elapsedTime) {
     sf::Event event;
-    while (window.pollEvent(event))
-    {
-        if (event.type == sf::Event::Closed)
-        {
+    while (window.pollEvent(event)) {
+        if (event.type == sf::Event::Closed) {
             window.close();
         }
-        if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
-        {
-            humans[0].setPath(findPath(humans[0].getPos(), {(float)event.mouseButton.x, (float)event.mouseButton.y}));
+        if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+            sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
+            sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos);
+            fires.push_back({worldPos, fireText});
+            int x = (int)worldPos.x / 16;
+            int y = (int)worldPos.y / 16;
+            collisionMap[y][x] = 2;
+        }
+    }
+    sf::Vector2f movement = round(GetPlayerDirection() * cameraSpeed * elapsedTime);
+    cameraPos += movement;
+    camera.move(movement);
+
+    for (std::list<Human>::iterator human = humans.begin(); human != humans.end(); ++human) {
+        human->update(elapsedTime, collisionMap, !fires.empty(), exits);
+        for (auto exit : exits) {
+            if (human->rect.intersects(exit.rect))
+                // human escape
+                human = humans.erase(human);
+        }
+        for (std::list<Fire>::iterator fire = fires.begin(); fire != fires.end(); ++fire) {
+            if (human->rect.intersects(fire->rect)) {
+                // human->die
+                human = humans.erase(human);
+                break;
+            }
         }
     }
 
-    for (int i = 0; i < humans.size(); i++)
-    {
-        humans[i].update(elapsedTime, collisionMap);
-    }
-    int fsize = fires.size();
-    for (int i = 0; i < fsize; i++)
-    {
-        fires[i].update(elapsedTime);
-
-        int y = fires[i].getPosition().y / 16 + rand() % 2;
-        int x = fires[i].getPosition().x / 16 + rand() % 2;
-        if (collisionMap[y][x] == 0)
-        {
-            collisionMap[y][x] == 2;
-            fires.push_back({{(float)16 * x, (float)16 * y}, fireText});
-        }
+    fireSpread();
+    for (std::list<Fire>::iterator it = fires.begin(); it != fires.end(); ++it) {
+        it->update(elapsedTime);
     }
 
-    
+    timer += elapsedTime;
 }
 
-void Engine::draw()
-{
+void Engine::draw() {
     window.clear();
+    window.setView(camera);
 
     sf::RenderWindow &target = window;
     level.Draw(target);
 
-    for (auto human : humans)
-    {
+    for (auto human : humans) {
         human.draw(target);
     }
 
-    for (auto fire : fires)
-    {
+    for (auto fire : fires) {
         fire.draw(target);
     }
 
     window.display();
 }
 
-void Engine::fillCollisionMap()
-{
+void Engine::fillCollisionMap() {
     int height = level.getHeight();
     int width = level.getWidth();
 
     collisionMap.resize(height);
-    for (int i = 0; i < collisionMap.size(); i++)
-    {
+    for (int i = 0; i < collisionMap.size(); i++) {
         collisionMap[i].resize(width);
     }
 
     for (int i = 0; i < height; i++)
-        for (int j = 0; j < width; j++)
-        {
-            for (auto wall : walls)
-            {
+        for (int j = 0; j < width; j++) {
+            for (auto wall : walls) {
                 collisionMap[i][j] += wall.rect.contains({j * 16.f + 1, i * 16.f + 1});
             }
         }
 
-    for (int i = 0; i < height; i++)
-    {
-        for (int j = 0; j < width; j++)
-        {
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
             std::cout << collisionMap[i][j];
         }
         std::cout << std::endl;
     }
 }
 
-list<sf::Vector2f> Engine::findPath(sf::Vector2f src, sf::Vector2f dst)
-{
-    Pair from((int)src.x / 16, (int)src.y / 16);
-    Pair to((int)dst.x / 16, (int)dst.y / 16);
+// FIX FIX FIX CRASH AFTER FIRE SPREADS
+void Engine::fireSpread() {
+    if (timer > 3) {
+        for (std::list<Fire>::iterator fire = fires.begin(); fire != fires.end(); ++fire) {
+            int x = fire->getPosition().x / 16;
+            int y = fire->getPosition().y / 16;
 
-    std::cout << from.first << " " << from.second << std::endl;
-    pathfind.aStarSearch(from, to);
-    return pathfind.getPath();
+            if (rand() % 2) {  // fire spreads randomly
+                int dx = rand() % 3 - 1;
+                int dy = rand() % 3 - 1;
+
+                if (x + dx > 0 && x + dx < collisionMap[0].size() && y + dy > 0 &&
+                    y + dy < collisionMap.size() && collisionMap[y + dy][x + dx] == 0) {
+                    fires.push_front({{(float)(x + dx) * 16, (float)(y + dy) * 16}, fireText});
+                    collisionMap[y + dy][x + dx] = 2;
+                }
+            }
+        }
+        // std::cout << "Fires count = " << fires.size() << std::endl;
+        timer = 0;
+    }
+}
+
+sf::Vector2f Engine::GetPlayerDirection() {
+    sf::Vector2f direction;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) || sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
+        direction.y = -1;
+    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S) ||
+               sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
+        direction.y = +1;
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) || sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
+        direction.x = -1;
+    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) ||
+               sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
+        direction.x = +1;
+    }
+
+    return normalize(direction);
 }

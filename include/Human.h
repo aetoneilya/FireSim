@@ -1,23 +1,17 @@
 #pragma once
-#include <utility>
 #include <SFML/Graphics.hpp>
-#include <float.h> // Константа FLT_EPSILON
-#include <math.h>
 #include <list>
-#include "TmxLevel.h"
+#include <utility>
+
 #include "AnimationManager.h"
+#include "Astar.h"
+#include "TmxLevel.h"
+#include "VectorFlow.h"
 
-enum directions
-{
-    DOWN,
-    LEFT,
-    RIGHT,
-    UP
-};
+enum directions { DOWN, LEFT, RIGHT, UP };
 
-class Human
-{
-private:
+class Human {
+   private:
     bool panic;
     float speed;
 
@@ -28,12 +22,20 @@ private:
     std::list<sf::Vector2f> path;
     sf::Texture q;
 
-public:
+    Astar pathfind;
+
+    float timer;
+    int waitTimer;
+
+    list<sf::Vector2f> findPath(sf::Vector2f src, sf::Vector2f dst);
+
+    bool pathClear(std::vector<std::vector<int>> &collisionMap);
+
+   public:
     sf::FloatRect rect;
     AnimationManager anim;
 
-    Human(const sf::Vector2f &Position, sf::Texture& humanText)
-    {
+    Human(const sf::Vector2f &Position, sf::Texture &humanText) {
         speed = 50.f;
         position = Position;
         aim = Position;
@@ -45,6 +47,7 @@ public:
 
         panic = false;
         dir = DOWN;
+        waitTimer = 0;
 
         anim.create("STAY", humanText, 16, 0, 16, 16, 1, 1, 16);
         anim.create("WALK_DOWN", humanText, 0, 0, 16, 16, 3, 5, 16);
@@ -63,12 +66,10 @@ public:
 
     void chill();
 
-    void update(float elapsedTime, std::vector<std::vector<int>> &collisionMap);
+    void update(float elapsedTime, std::vector<std::vector<int>> &collisionMap, bool isFire,
+                std::vector<TmxObject> &exits);
 
     void setPath(std::list<sf::Vector2f> newPath);
 
     sf::Vector2f getPos();
-
-    sf::Vector2f round(const sf::Vector2f value);
-    sf::Vector2f normalize(const sf::Vector2f value);
 };

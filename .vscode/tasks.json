@@ -1,0 +1,42 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cppbuild",
+			"label": "C/C++: cpp.exe сборка активного файла",
+			"command": "C:\\MinGW\\bin\\g++.exe",
+			"args": [
+				"-g",
+				"main.cpp",
+				"Engine.cpp",
+				"tinyxml2.cpp",
+				"TmxLevel.cpp",
+				"Human.cpp",
+				"AnimationManager.cpp",
+				"Astar.cpp",
+				"VectorFlow.cpp",
+				"-o",
+				"${workspaceFolder}\\build\\my_project.exe",
+				"-I",
+				"${workspaceFolder}\\SFML-2.5.1\\include",
+				"-I",
+				"${workspaceFolder}\\include",
+                "-L${workspaceFolder}\\SFML-2.5.1\\lib",
+                "-lsfml-graphics",
+                "-lsfml-window",
+                "-lsfml-system",
+			],
+			"options": {
+				"cwd": "${fileDirname}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "компилятор: C:\\MinGW\\bin\\g++.exe"
+		}
+	]
+}
