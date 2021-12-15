@@ -5,14 +5,19 @@
 
 #include "AnimationManager.h"
 #include "Astar.h"
-#include "TmxLevel.h"
+#include "Fire.h"
+#include "LevelData.h"
 #include "VectorFlow.h"
 
 enum directions { DOWN, LEFT, RIGHT, UP };
 
 class Human {
    private:
+    int hp;
+    bool alive;
     bool panic;
+    bool hero;
+    bool hasExtingshr;
     float speed;
 
     directions dir;
@@ -28,6 +33,11 @@ class Human {
     int waitTimer;
 
     list<sf::Vector2f> findPath(sf::Vector2f src, sf::Vector2f dst);
+    list<sf::Vector2f> findShortestPath(std::vector<TmxObject> objects);
+    list<sf::Vector2f> findShortestPathObj(std::list<Object> objects, string type);
+    list<sf::Vector2f> findShortestPathPos(std::vector<sf::Vector2f> positions);
+
+    std::vector<sf::Vector2f> getFireFront(std::vector<std::vector<int>> collisionMap);
 
     bool pathClear(std::vector<std::vector<int>> &collisionMap);
 
@@ -35,7 +45,7 @@ class Human {
     sf::FloatRect rect;
     AnimationManager anim;
 
-    Human(const sf::Vector2f &Position, sf::Texture &humanText) {
+    Human(const sf::Vector2f &Position, sf::Texture &humanTxtr) {
         speed = 50.f;
         position = Position;
         aim = Position;
@@ -45,19 +55,32 @@ class Human {
         rect.width = 16;
         rect.height = 16;
 
+        hp = 100;
+        alive = true;
         panic = false;
+
+        hero = ((rand() % 10) == 1) ? true : false;
+        hasExtingshr = false;
+
         dir = DOWN;
         waitTimer = 0;
 
-        anim.create("STAY", humanText, 16, 0, 16, 16, 1, 1, 16);
-        anim.create("WALK_DOWN", humanText, 0, 0, 16, 16, 3, 5, 16);
-        anim.create("WALK_LEFT", humanText, 0, 16, 16, 16, 3, 5, 16);
-        anim.create("WALK_RIGHT", humanText, 0, 32, 16, 16, 3, 5, 16);
-        anim.create("WALK_UP", humanText, 0, 48, 16, 16, 3, 5, 16);
-        // TODO : add dying animation
+        anim.create("STAY", humanTxtr, 16, 0, 16, 16, 1, 1, 16);
+        anim.create("WALK_DOWN", humanTxtr, 0, 0, 16, 16, 3, 5, 16);
+        anim.create("WALK_LEFT", humanTxtr, 0, 16, 16, 16, 3, 5, 16);
+        anim.create("WALK_RIGHT", humanTxtr, 0, 32, 16, 16, 3, 5, 16);
+        anim.create("WALK_UP", humanTxtr, 0, 48, 16, 16, 3, 5, 16);
+        anim.create("FIGHT_FIRE_RIGHT", humanTxtr, 0, 64, 16, 16, 3, 5, 16);
+        anim.create("FIGHT_FIRE_DOWN", humanTxtr, 0, 80, 16, 16, 3, 5, 16);
+        anim.create("FIGHT_FIRE_LEFT", humanTxtr, 0, 96, 16, 16, 3, 5, 16);
+        anim.create("FIGHT_FIRE_UP", humanTxtr, 0, 112, 16, 16, 3, 5, 16);
+
+        anim.tick(0);
     }
 
     void draw(sf::RenderWindow &target);
+
+    void startPanic(LevelData &levelData);
 
     void walkTo(const sf::Vector2f &movement);
 
@@ -66,10 +89,13 @@ class Human {
 
     void chill();
 
-    void update(float elapsedTime, std::vector<std::vector<int>> &collisionMap, bool isFire,
-                std::vector<TmxObject> &exits);
+    void update(float elapsedTime, std::list<Fire> &fires, LevelData &levelData);
 
     void setPath(std::list<sf::Vector2f> newPath);
 
     sf::Vector2f getPos();
+    int getHP();
+    bool isAlive();
+    bool isPanic();
+    void touchFire();
 };

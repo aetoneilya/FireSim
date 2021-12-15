@@ -5,11 +5,7 @@
 #include <map>
 #include <SFML/Graphics.hpp>
 
-// В картах TMX объект - это область на карте, имеющая имя, тип,
-//  границы, набор пользовательских свойств (в формате ключ-значение)
-//  и текстурные координаты.
-// Текстурные координаты позволяют связать с объектом спрайт,
-//  использующий основную текстуру карты как источник данных.
+
 struct TmxObject
 {
   int GetPropertyInt(const std::string &propertyName);
@@ -27,10 +23,7 @@ struct TmxObject
   sf::Sprite sprite;
 };
 
-// В картах TMX слой - это набор тайлов (спрайтов),
-//  из которых складывается ландшафт карты.
-// Слоёв может быть несколько, что позволяет нарисовать,
-//  например, слой травы поверх слоя земли.
+
 struct TmxLayer
 {
   sf::Uint8 opacity = 0;
@@ -40,7 +33,6 @@ struct TmxLayer
 class TmxLevel
 {
 public:
-  // Загружает данные из TMX в память объекта.
   bool LoadFromFile(const std::string &filepath);
 
   TmxObject GetFirstObject(const std::string &name) const;
@@ -50,9 +42,6 @@ public:
   float GetTilemapHeight() const;
   sf::Vector2f GetTilemapSize() const;
 
-  // Рисует все слои тайлов один за другим,
-  //  но не рисует объекты (рисованием которых должна заниматься игра).
-  // Принимает любую цель для рисования, например, sf::RenderWindow.
   void Draw(sf::RenderTarget &target) const;
 
   int getWidth()
